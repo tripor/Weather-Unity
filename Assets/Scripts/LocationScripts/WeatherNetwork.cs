@@ -44,102 +44,110 @@ public class WeatherNetwork
 
     public IEnumerator ProcessWeather()
     {
-        UnityWebRequest webRequest;
+        UnityWebRequest webRequest = UnityWebRequest.Get("https://api.ipify.org?format=json");
         string text;
         ExternalWeatherInformation externalWeatherInformation;
+        bool problems = true;
 #if PLATFORM_ANDROID
+        problems = false;
         if (!Input.location.isEnabledByUser)
         {
-            OnWeatherDataError("Not enough device permissions");
-            yield break;
+            OnWeatherDataError("Not enough device permissions, using IP location");
+            problems = true;
         }
-
-        Input.location.Start();
-
-        // Waits until the location service initializes
-        int maxWait = 20;
-        while (Input.location.status == LocationServiceStatus.Initializing && maxWait > 0)
-        {
-            yield return new WaitForSeconds(1);
-            maxWait--;
-        }
-        // If the service didn't initialize in 20 seconds this cancels location service use.
-        if (maxWait < 1)
-        {
-            OnWeatherDataError("Location service not initialized");
-            yield break;
-        }
-        if (Input.location.status == LocationServiceStatus.Failed)
-        {
-            OnWeatherDataError("Unable to determine device location");
-            yield break;
-        }
-        else
+        if (!problems)
         {
 
-            // If the connection succeeded, this retrieves the device's current location and displays it in the Console window.
-            //print("Location: " + Input.location.lastData.latitude + " " + Input.location.lastData.longitude + " " + Input.location.lastData.altitude + " " + Input.location.lastData.horizontalAccuracy + " " + Input.location.lastData.timestamp);
-            webRequest = UnityWebRequest.Get("http://www.geoplugin.net/extras/location.gp?lat=" + Input.location.lastData.latitude + "&lon=" + Input.location.lastData.longitude + "&format=json");
+            Input.location.Start();
+
+            // Waits until the location service initializes
+            int maxWait = 20;
+            while (Input.location.status == LocationServiceStatus.Initializing && maxWait > 0)
+            {
+                yield return new WaitForSeconds(1);
+                maxWait--;
+            }
+            // If the service didn't initialize in 20 seconds this cancels location service use.
+            if (maxWait < 1)
+            {
+                OnWeatherDataError("Location service not initialized, using IP location");
+                problems = true;
+            }
+            if (!problems)
+            {
+                if (Input.location.status == LocationServiceStatus.Failed)
+                {
+                    // If device localion is unavailable fallback to ip location
+                    OnWeatherDataError("Unable to determine device location, using IP location");
+                    problems = true;
+                }
+                else
+                {
+                    webRequest = UnityWebRequest.Get("http://www.geoplugin.net/extras/location.gp?lat=" + Input.location.lastData.latitude.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) + "&lon=" + Input.location.lastData.longitude.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) + "&format=json");
+                    yield return webRequest.SendWebRequest();
+                    try
+                    {
+                        text = GetResult(webRequest);
+                        var externalLocationInformation = JsonUtility.FromJson<ExternalLocationInformationSimpler>(text);
+                        if (externalLocationInformation == null || externalLocationInformation.geoplugin_place == null) throw new DataProcessingError("There was a problem processing weather data");
+
+                        OnWeatherLocationName(externalLocationInformation.geoplugin_place);
+
+                        webRequest = UnityWebRequest.Get("http://api.openweathermap.org/data/2.5/weather?lat=" + Input.location.lastData.latitude + "&lon=" + Input.location.lastData.longitude + "&appid=d67b3b963691d6ea4b8f646ac3fb3337");
+                    }
+                    catch (Exception)
+                    {
+                        OnWeatherDataError("Unable to determine device location");
+                        yield break;
+                    }
+
+
+                }
+            }
+            Input.location.Stop();
+        }
+
+#endif
+        if (problems)
+        {
+            // Get device IP
+            webRequest = UnityWebRequest.Get("https://api.ipify.org?format=json");
             yield return webRequest.SendWebRequest();
             try
             {
                 text = GetResult(webRequest);
-                var externalLocationInformation = JsonUtility.FromJson<ExternalLocationInformation>(text);
-                if (externalLocationInformation == null || externalLocationInformation.geoplugin_city == null) throw new DataProcessingError("There was a problem processing weather data");
+                // Tranform response to class
+                currentIP = JsonUtility.FromJson<ExternalIPResponse>(text);
 
-                OnWeatherLocationName(externalLocationInformation.geoplugin_city);
-
-                webRequest = UnityWebRequest.Get("http://api.openweathermap.org/data/2.5/weather?lat=" + Input.location.lastData.latitude + "&lon=" + Input.location.lastData.longitude + "&appid=d67b3b963691d6ea4b8f646ac3fb3337");
+                if (currentIP == null) throw new DataProcessingError("There was a problem processing weather data");
+                // Get the geo location by ip
+                webRequest = UnityWebRequest.Get("http://www.geoplugin.net/json.gp?ip=" + currentIP);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                OnWeatherDataError("Unable to determine device location");
+                OnWeatherDataError(ex.ToString());
                 yield break;
             }
+            yield return webRequest.SendWebRequest();
+            try
+            {
+                text = GetResult(webRequest);
+                // Transform geo location json to class
+                externalLocationInformation = JsonUtility.FromJson<ExternalLocationInformation>(text);
+                if (externalLocationInformation == null || externalLocationInformation.geoplugin_city == null || externalLocationInformation.geoplugin_latitude == null || externalLocationInformation.geoplugin_longitude == null) throw new DataProcessingError("There was a problem processing weather data");
+                OnWeatherLocationName(externalLocationInformation.geoplugin_city);
 
 
-        }
-        Input.location.Stop();
-#else
-
-        // Get device IP
-        webRequest = UnityWebRequest.Get("https://api.ipify.org?format=json");
-        yield return webRequest.SendWebRequest();
-        try
-        {
-            text = GetResult(webRequest);
-            // Tranform response to class
-            currentIP = JsonUtility.FromJson<ExternalIPResponse>(text);
-
-            if (currentIP == null) throw new DataProcessingError("There was a problem processing weather data");
-            // Get the geo location by ip
-            webRequest = UnityWebRequest.Get("http://www.geoplugin.net/json.gp?ip=" + currentIP);
-        }
-        catch (Exception ex)
-        {
-            OnWeatherDataError(ex.ToString());
-            yield break;
-        }
-        yield return webRequest.SendWebRequest();
-        try
-        {
-            text = GetResult(webRequest);
-            // Transform geo location json to class
-            externalLocationInformation = JsonUtility.FromJson<ExternalLocationInformation>(text);
-            if (externalLocationInformation == null || externalLocationInformation.geoplugin_city == null || externalLocationInformation.geoplugin_latitude == null || externalLocationInformation.geoplugin_longitude == null) throw new DataProcessingError("There was a problem processing weather data");
-            OnWeatherLocationName(externalLocationInformation.geoplugin_city);
-
-
-            // Get weather forecast
-            webRequest = UnityWebRequest.Get("http://api.openweathermap.org/data/2.5/weather?lat=" + externalLocationInformation.geoplugin_latitude + "&lon=" + externalLocationInformation.geoplugin_longitude + "&appid=d67b3b963691d6ea4b8f646ac3fb3337");
-        }
-        catch (Exception ex)
-        {
-            OnWeatherDataError(ex.ToString());
-            yield break;
+                // Get weather forecast
+                webRequest = UnityWebRequest.Get("http://api.openweathermap.org/data/2.5/weather?lat=" + externalLocationInformation.geoplugin_latitude + "&lon=" + externalLocationInformation.geoplugin_longitude + "&appid=d67b3b963691d6ea4b8f646ac3fb3337");
+            }
+            catch (Exception ex)
+            {
+                OnWeatherDataError(ex.ToString());
+                yield break;
+            }
         }
 
-#endif
         yield return webRequest.SendWebRequest();
         try
         {
@@ -188,6 +196,7 @@ public class WeatherNetwork
         }
         OnWeatherProccessingDone();
     }
+
 
     private void ProcessWeatherDataTypes(in ExternalWeatherInformation info)
     {
@@ -292,6 +301,19 @@ public class WeatherNetwork
         public string geoplugin_currencySymbol = null;
         public string geoplugin_currencySymbol_UTF8 = null;
         public float geoplugin_currencyConverter = 0;
+    }
+    [Serializable]
+    private class ExternalLocationInformationSimpler
+    {
+        public string geoplugin_place = null;
+        public string geoplugin_countryCode = null;
+        public string geoplugin_region = null;
+        public string geoplugin_regionAbbreviated = null;
+        public string geoplugin_county = null;
+        public string geoplugin_latitude = null;
+        public string geoplugin_longitude = null;
+        public float geoplugin_distanceMiles = 0;
+        public float geoplugin_distanceKilometers = 0;
     }
     [Serializable]
     private class ExternalWeatherInformation
