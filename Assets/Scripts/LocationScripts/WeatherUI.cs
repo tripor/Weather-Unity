@@ -31,7 +31,7 @@ public class WeatherUI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        timeText.text = "Current time: " + System.DateTime.Now.ToString("dd-MM-yy HH:mm:ss");
+        timeText.text = "Current time: " + System.DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
     }
 
     public void SelectLocation(int locationNumber)
