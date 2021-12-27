@@ -29,6 +29,7 @@ public class PlayerController : MonoBehaviour
     private string defaultImageLink = "https://images.squarespace-cdn.com/content/v1/56d8ba4ab654f9a47f6d39fa/1480447528456-YVOR69SOKYNTMBV9WXMZ/glartek_logo.png";
 
     private bool playingVideo;
+    private bool erroVideo;
     private int loading;
 
     private string videoLink;
@@ -44,6 +45,7 @@ public class PlayerController : MonoBehaviour
         videoPlayer2D.prepareCompleted += VideoPrepared;
         videoPlayer3D.prepareCompleted += VideoPrepared;
         playingVideo = false;
+        erroVideo = false;
         videoPlayer2D.Stop();
         videoPlayer3D.Stop();
         loadingText.SetActive(false);
@@ -57,7 +59,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (playingVideo)
+        if (playingVideo && !erroVideo)
         {
             CubeVideoPlayer.transform.rotation *= Quaternion.Euler(Time.deltaTime * speedRotation, Time.deltaTime * speedRotation, Time.deltaTime * speedRotation * 2);
         }
@@ -71,6 +73,7 @@ public class PlayerController : MonoBehaviour
             loadingText.SetActive(false);
             startButtonText.text = "Start";
             playingVideo = false;
+            erroVideo = false;
             videoPlayer2D.Stop();
             videoPlayer3D.Stop();
         }
@@ -132,6 +135,8 @@ public class PlayerController : MonoBehaviour
     {
         errorText.GetComponent<TextMeshProUGUI>().text = "Error: could not load video";
         errorText.SetActive(true);
+        erroVideo = true;
+        CheckIfLoading();
     }
 
     private void VideoPrepared(VideoPlayer source)
@@ -153,9 +158,12 @@ public class PlayerController : MonoBehaviour
         {
             loading = 0;
             playingVideo = true;
+            if (!erroVideo)
+            {
+                videoPlayer2D.Play();
+                videoPlayer3D.Play();
+            }
             loadingText.SetActive(false);
-            videoPlayer2D.Play();
-            videoPlayer3D.Play();
             startButton.interactable = true;
             videoInput.interactable = true;
             imageInput.interactable = true;

@@ -1789,7 +1789,7 @@ VideoPlayer:
   - {fileID: 0}
   m_DirectAudioVolumes:
   - 1
-  m_Url: https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4
+  m_Url: 
   m_EnabledAudioTracks: 01
   m_DirectAudioMutes: 00
   m_ControlledAudioTrackCount: 1
@@ -2602,6 +2602,8 @@ MonoBehaviour:
   videoInput: {fileID: 1298878133}
   imageInput: {fileID: 157922500}
   speedRotation: 5
+  defaultVideoLink: https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4
+  defaultImageLink: https://images.squarespace-cdn.com/content/v1/56d8ba4ab654f9a47f6d39fa/1480447528456-YVOR69SOKYNTMBV9WXMZ/glartek_logo.png
 --- !u!1 &1800036628
 GameObject:
   m_ObjectHideFlags: 0
@@ -2716,7 +2718,7 @@ VideoPlayer:
   - {fileID: 0}
   m_DirectAudioVolumes:
   - 1
-  m_Url: https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4
+  m_Url: 
   m_EnabledAudioTracks: 01
   m_DirectAudioMutes: 00
   m_ControlledAudioTrackCount: 1
