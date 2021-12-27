@@ -23,7 +23,9 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField]
     private float speedRotation = 1f;
+    [SerializeField]
     private string defaultVideoLink = "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4";
+    [SerializeField]
     private string defaultImageLink = "https://images.squarespace-cdn.com/content/v1/56d8ba4ab654f9a47f6d39fa/1480447528456-YVOR69SOKYNTMBV9WXMZ/glartek_logo.png";
 
     private bool playingVideo;
