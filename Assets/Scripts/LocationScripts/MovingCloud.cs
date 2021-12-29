@@ -18,6 +18,7 @@ public class MovingCloud : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // Generate a new cloud "shape"
         transform.localScale = new Vector3(Random.Range(0.8f, 1.5f), Random.Range(0.8f, 1.5f), Random.Range(0.8f, 1.5f));
         rotateAmount = new Vector3(Random.Range(0f, 1f) * rotationSpeed, Random.Range(0f, 1f) * rotationSpeed, Random.Range(0f, 1f) * rotationSpeed);
         SetNewPosition();
@@ -34,7 +35,9 @@ public class MovingCloud : MonoBehaviour
         else
             transform.position = Vector3.Lerp(startPosition, endPosition, percentageDistanceSoFar);
     }
-
+    /// <summary>
+    /// Create a random new position for the cloud to move to
+    /// </summary>
     private void SetNewPosition()
     {
         startPosition = transform.position;

@@ -49,7 +49,9 @@ public class WeatherNetwork
         ExternalWeatherInformation externalWeatherInformation;
         bool problems = true;
 #if PLATFORM_ANDROID
+        // For android platform
         problems = false;
+        // Check if user has enough permissions
         if (!Input.location.isEnabledByUser)
         {
             OnWeatherDataError("Not enough device permissions, using IP location");
@@ -57,57 +59,71 @@ public class WeatherNetwork
         }
         if (!problems)
         {
+            bool externalError = true;
+            int maxRetries = 3;
+            // The while serves to retry the http request, sometimes the location data is not available and it will fail
+            while (externalError && maxRetries > 0)
+            {
+                externalError = false;
+                maxRetries--;
+                // If all retries user fall back to ip location
+                if (maxRetries <= 0) problems = true;
 
-            Input.location.Start();
+                Input.location.Start();
 
-            // Waits until the location service initializes
-            int maxWait = 20;
-            while (Input.location.status == LocationServiceStatus.Initializing && maxWait > 0)
-            {
-                yield return new WaitForSeconds(1);
-                maxWait--;
-            }
-            // If the service didn't initialize in 20 seconds this cancels location service use.
-            if (maxWait < 1)
-            {
-                OnWeatherDataError("Location service not initialized, using IP location");
-                problems = true;
-            }
-            if (!problems)
-            {
-                if (Input.location.status == LocationServiceStatus.Failed)
+                // Waits until the location service initializes
+                int maxWait = 20;
+                while (Input.location.status == LocationServiceStatus.Initializing && maxWait > 0)
                 {
-                    // If device localion is unavailable fallback to ip location
-                    OnWeatherDataError("Unable to determine device location, using IP location");
+                    yield return new WaitForSeconds(1);
+                    maxWait--;
+                }
+                // If the service didn't initialize in 20 seconds this cancels location service use.
+                if (maxWait < 1)
+                {
+                    OnWeatherDataError("Location service not initialized, using IP location");
                     problems = true;
                 }
-                else
+                if (!problems)
                 {
-                    webRequest = UnityWebRequest.Get("http://www.geoplugin.net/extras/location.gp?lat=" + Input.location.lastData.latitude.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) + "&lon=" + Input.location.lastData.longitude.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) + "&format=json");
-                    yield return webRequest.SendWebRequest();
-                    try
+                    if (Input.location.status == LocationServiceStatus.Failed)
                     {
-                        text = GetResult(webRequest);
-                        var externalLocationInformation = JsonUtility.FromJson<ExternalLocationInformationSimpler>(text);
-                        if (externalLocationInformation == null || externalLocationInformation.geoplugin_place == null) throw new DataProcessingError("There was a problem processing weather data");
-
-                        OnWeatherLocationName(externalLocationInformation.geoplugin_place);
-
-                        webRequest = UnityWebRequest.Get("http://api.openweathermap.org/data/2.5/weather?lat=" + Input.location.lastData.latitude + "&lon=" + Input.location.lastData.longitude + "&appid=d67b3b963691d6ea4b8f646ac3fb3337");
+                        // If device localion is unavailable fallback to ip location
+                        OnWeatherDataError("Unable to determine device location, using IP location");
+                        problems = true;
                     }
-                    catch (Exception)
+                    else
                     {
-                        OnWeatherDataError("Unable to determine device location, please retry");
-                        yield break;
+                        // Get the current location place name
+                        webRequest = UnityWebRequest.Get("http://www.geoplugin.net/extras/location.gp?lat=" + Input.location.lastData.latitude.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) + "&lon=" + Input.location.lastData.longitude.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) + "&format=json");
+                        yield return webRequest.SendWebRequest();
+                        try
+                        {
+                            text = GetResult(webRequest);
+                            var externalLocationInformation = JsonUtility.FromJson<ExternalLocationInformationSimpler>(text);
+                            if (externalLocationInformation == null || externalLocationInformation.geoplugin_place == null) throw new DataProcessingError("There was a problem processing weather data");
+                            // Notify the city name
+                            OnWeatherLocationName(externalLocationInformation.geoplugin_place);
+
+                            // Prepare the request to get the current weather
+                            webRequest = UnityWebRequest.Get("http://api.openweathermap.org/data/2.5/weather?lat=" + Input.location.lastData.latitude + "&lon=" + Input.location.lastData.longitude + "&appid=d67b3b963691d6ea4b8f646ac3fb3337");
+                        }
+                        catch (Exception)
+                        {
+                            externalError = true;
+                        }
                     }
-
-
+                    if (externalError)
+                    {
+                        yield return new WaitForSeconds(1);
+                    }
                 }
+                Input.location.Stop();
             }
-            Input.location.Stop();
         }
 
 #endif
+        // Normally used for pc version or fallback for android
         if (problems)
         {
             // Get device IP
@@ -135,6 +151,7 @@ public class WeatherNetwork
                 // Transform geo location json to class
                 externalLocationInformation = JsonUtility.FromJson<ExternalLocationInformation>(text);
                 if (externalLocationInformation == null || externalLocationInformation.geoplugin_city == null || externalLocationInformation.geoplugin_latitude == null || externalLocationInformation.geoplugin_longitude == null) throw new DataProcessingError("There was a problem processing weather data");
+                // Notify the new city name
                 OnWeatherLocationName(externalLocationInformation.geoplugin_city);
 
 
@@ -162,11 +179,18 @@ public class WeatherNetwork
             OnWeatherDataError(ex.ToString());
             yield break;
         }
+        // Notify that the processing is done
         OnWeatherProccessingDone();
 
     }
+    /// <summary>
+    /// Used to get the weather for a specific city id 
+    /// </summary>
+    /// <param name="cityID">The city ID</param>
+    /// <returns></returns>
     public IEnumerator ProcessWeather(int cityID)
     {
+        // If the information is saved to be re-used to save api requests
         if (weatherDictionary.ContainsKey(cityID))
         {
             var info = weatherDictionary[cityID];
@@ -175,6 +199,7 @@ public class WeatherNetwork
         }
         else
         {
+            // Request weather for the city ID
             UnityWebRequest webRequest = UnityWebRequest.Get("http://api.openweathermap.org/data/2.5/weather?id=" + cityID + "&appid=d67b3b963691d6ea4b8f646ac3fb3337");
             yield return webRequest.SendWebRequest();
             try
@@ -186,6 +211,7 @@ public class WeatherNetwork
                 if (externalWeatherInformation == null || externalWeatherInformation.name == null) throw new DataProcessingError("There was a problem processing weather data");
                 OnWeatherLocationName(externalWeatherInformation.name);
                 ProcessWeatherDataTypes(externalWeatherInformation);
+                // Save the weather information
                 weatherDictionary.Add(cityID, externalWeatherInformation);
             }
             catch (Exception ex)
@@ -197,7 +223,10 @@ public class WeatherNetwork
         OnWeatherProccessingDone();
     }
 
-
+    /// <summary>
+    /// Process the weather information an notify their type
+    /// </summary>
+    /// <param name="info"></param>
     private void ProcessWeatherDataTypes(in ExternalWeatherInformation info)
     {
         if (info == null || info.weather == null || info.main == null)

@@ -41,11 +41,13 @@ public class SortController : MonoBehaviour
         if (sortingColor)
         {
             time += Time.deltaTime;
+            // Wait before moving the next cube
             if (time >= timeBetweenMovement)
             {
                 time = 0;
                 float x = cubeColorIndex[unsortedCubes[cubeIndex].GetColorNumber() - 1] * spaceBetweenCubes;
                 float z = -(unsortedCubes[cubeIndex].GetColorNumber() + 1) * spaceBetweenCubes;
+                // Notify the cube for its new position to move
                 unsortedCubes[cubeIndex].MoveToPosition(new Vector3(x, 0, z));
                 cubeColorIndex[unsortedCubes[cubeIndex].GetColorNumber() - 1]++;
                 cubeIndex++;
@@ -70,6 +72,9 @@ public class SortController : MonoBehaviour
         ResetSort();
     }
 
+    /// <summary>
+    /// Notify all cubes to move to their position on sorted list
+    /// </summary>
     private void MoveSortedCubes()
     {
         for (int i = 0; i < sortedCubes.Count; i++)
@@ -78,11 +83,13 @@ public class SortController : MonoBehaviour
         }
     }
 
+    // Reset the scene
     private void ResetSort()
     {
         sortingColor = false;
         cubeIndex = 0;
         sortButton.interactable = true;
+        // Delete all cubes
         for (int i = 0; i < unsortedCubes.Count || i < sortedCubes.Count; i++)
         {
             if (unsortedCubes.Count > i) unsortedCubes[i].DestroySelf();
@@ -90,6 +97,7 @@ public class SortController : MonoBehaviour
         }
         unsortedCubes = new List<SortCubeController>();
         sortedCubes = new List<SortCubeController>();
+        // Create new cubes
         for (int i = 0; i < cubeAmount; i++)
         {
             int randomColor = UnityEngine.Random.Range(1, 4);

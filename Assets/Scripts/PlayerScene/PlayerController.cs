@@ -59,14 +59,18 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Rotate the cube
         if (playingVideo && !erroVideo)
         {
             CubeVideoPlayer.transform.rotation *= Quaternion.Euler(Time.deltaTime * speedRotation, Time.deltaTime * speedRotation, Time.deltaTime * speedRotation * 2);
         }
     }
-
+    /// <summary>
+    /// Button start click event
+    /// </summary>
     public void StartVideoPlayer()
     {
+        // If playing stop
         if (playingVideo)
         {
             errorText.SetActive(false);
@@ -79,6 +83,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
+            // Load the video and start playing
             startButtonText.text = "Stop";
             if (string.IsNullOrWhiteSpace(videoLink))
             {
@@ -151,6 +156,9 @@ public class PlayerController : MonoBehaviour
         videoPlayer2D.prepareCompleted -= VideoPrepared;
         videoPlayer3D.prepareCompleted -= VideoPrepared;
     }
+    /// <summary>
+    /// Wait for all 3 loads to finish: the ui video, 3d video and image
+    /// </summary>
     private void CheckIfLoading()
     {
         loading++;

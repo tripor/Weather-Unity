@@ -33,7 +33,10 @@ public class WeatherUI : MonoBehaviour
     {
         timeText.text = "Current time: " + System.DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
     }
-
+    /// <summary>
+    /// Button click event
+    /// </summary>
+    /// <param name="locationNumber"></param>
     public void SelectLocation(int locationNumber)
     {
         ChangeButtonsInteract(false);

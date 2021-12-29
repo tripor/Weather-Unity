@@ -29,7 +29,10 @@ public class SortCubeController : MonoBehaviour, IComparable
             if (time >= timeToReach) moving = false;
         }
     }
-
+    /// <summary>
+    /// Set this cube color
+    /// </summary>
+    /// <param name="randomColor">The cube color: 1 red, 2 green, 3 blue</param>
     public void SetColor(int randomColor)
     {
         colorNumber = randomColor;
@@ -54,6 +57,10 @@ public class SortCubeController : MonoBehaviour, IComparable
     {
         return colorNumber;
     }
+    /// <summary>
+    /// Set my position to move to
+    /// </summary>
+    /// <param name="position"></param>
     public void MoveToPosition(Vector3 position)
     {
         time = 0;
@@ -61,7 +68,11 @@ public class SortCubeController : MonoBehaviour, IComparable
         endPosition = position;
         moving = true;
     }
-
+    /// <summary>
+    /// Compare myself to other cubes to sort
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
     public int CompareTo(object obj)
     {
         int otherNumber = ((SortCubeController)obj).GetColorNumber();

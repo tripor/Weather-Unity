@@ -39,7 +39,13 @@ public class WeatherController : MonoBehaviour
 
     }
 
-
+    /// <summary>
+    /// Update the scene based on the type of weather
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="currentTemp"></param>
+    /// <param name="minTemp"></param>
+    /// <param name="maxTemp"></param>
     private void OnWeatherDataBroadcast(WeatherNetwork.WeatherTypes type, float currentTemp, float minTemp, float maxTemp)
     {
         float currentTemperature = currentTemp - 272.15f;
@@ -133,6 +139,10 @@ public class WeatherController : MonoBehaviour
         WeatherNetwork.OnWeatherLocationName -= OnWeatherLocationName;
         SceneManager.sceneUnloaded -= OnSceneUnloaded;
     }
+    /// <summary>
+    /// Activate a percentage of the generated clouds
+    /// </summary>
+    /// <param name="amount">The percentage of cloud to be shown from the total generated</param>
     private void ActivateClouds(float amount)
     {
         var numberToActivate = Mathf.RoundToInt(totalNumberOfClouds * amount);
@@ -145,7 +155,9 @@ public class WeatherController : MonoBehaviour
             numberToActivate--;
         }
     }
-
+    /// <summary>
+    /// Generate all the cloud to be used for the different types of weather
+    /// </summary>
     private void GenerateClouds()
     {
         List<GameObject> cloudToRemove = new List<GameObject>();
