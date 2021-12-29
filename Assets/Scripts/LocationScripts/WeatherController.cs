@@ -13,6 +13,7 @@ public class WeatherController : MonoBehaviour
     public TextMeshPro locationText3D;
     public TextMeshProUGUI locationTextUI;
     public TextMeshProUGUI tempInfo;
+    public TextMeshProUGUI weatherText;
 
     [SerializeField]
     private int totalNumberOfClouds = 20;
@@ -50,61 +51,76 @@ public class WeatherController : MonoBehaviour
             sunObject.SetActive(true);
             ActivateClouds(0f);
             rainEmission.rateOverTime = 0;
+            SetCurrentWeatherText("Clear");
         }
         else if (type == WeatherNetwork.WeatherTypes.Clouds)
         {
             sunObject.SetActive(true);
             ActivateClouds(1f);
             rainEmission.rateOverTime = 0;
+            SetCurrentWeatherText("Clouds");
         }
         else if (type == WeatherNetwork.WeatherTypes.Drizzle)
         {
             sunObject.SetActive(true);
             ActivateClouds(0.5f);
             rainEmission.rateOverTime = 5;
+            SetCurrentWeatherText("Drizzle");
         }
         else if (type == WeatherNetwork.WeatherTypes.FewClouds)
         {
             sunObject.SetActive(true);
             ActivateClouds(0.25f);
             rainEmission.rateOverTime = 0;
+            SetCurrentWeatherText("Low Clouds");
         }
         else if (type == WeatherNetwork.WeatherTypes.HeavyRain)
         {
             sunObject.SetActive(false);
             ActivateClouds(1f);
             rainEmission.rateOverTime = 50;
+            SetCurrentWeatherText("Heavy Rain");
         }
         else if (type == WeatherNetwork.WeatherTypes.LightRain)
         {
             sunObject.SetActive(true);
             ActivateClouds(1f);
             rainEmission.rateOverTime = 15;
+            SetCurrentWeatherText("Light Rain");
         }
         else if (type == WeatherNetwork.WeatherTypes.Rain)
         {
             sunObject.SetActive(false);
             ActivateClouds(1f);
             rainEmission.rateOverTime = 30;
+            SetCurrentWeatherText("Rain");
         }
         else if (type == WeatherNetwork.WeatherTypes.Snow)
         {
             sunObject.SetActive(false);
             ActivateClouds(1f);
             rainEmission.rateOverTime = 30;
+            SetCurrentWeatherText("Snow");
         }
         else if (type == WeatherNetwork.WeatherTypes.Strom)
         {
             sunObject.SetActive(false);
             ActivateClouds(1f);
             rainEmission.rateOverTime = 50;
+            SetCurrentWeatherText("Storm");
         }
         else
         {
             sunObject.SetActive(false);
             ActivateClouds(0f);
             rainEmission.rateOverTime = 0;
+            SetCurrentWeatherText("No weather");
         }
+    }
+
+    private void SetCurrentWeatherText(string weather)
+    {
+        weatherText.text = "Current weather: " + weather;
     }
     private void OnWeatherLocationName(string location)
     {

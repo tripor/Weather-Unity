@@ -97,7 +97,7 @@ public class WeatherNetwork
                     }
                     catch (Exception)
                     {
-                        OnWeatherDataError("Unable to determine device location");
+                        OnWeatherDataError("Unable to determine device location, please retry");
                         yield break;
                     }
 
